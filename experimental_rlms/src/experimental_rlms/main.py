@@ -18,10 +18,13 @@ DEFAULT_URLS = [
 ]
 
 
-def _detect_content_type(url: str, headers: dict[str, str]) -> str:
-    """Return 'pdf' or 'html' based on response headers and URL."""
+def _detect_content_type(url: str, headers: dict[str, str], data: bytes) -> str:
+    """Return 'pdf' or 'html' based on response headers, URL, and content."""
     ct = headers.get("Content-Type", "").lower()
     if "application/pdf" in ct or url.rstrip("/").endswith(".pdf"):
+        return "pdf"
+    # Detect PDF by magic bytes (handles URLs like arxiv.org/pdf/ID)
+    if data[:5] == b"%PDF-":
         return "pdf"
     return "html"
 
@@ -105,7 +108,7 @@ class ResearchFlow(Flow[ResearchState]):
                 print(f"    Fetch failed: {exc}")
                 continue
 
-            content_type = _detect_content_type(url, resp_headers)
+            content_type = _detect_content_type(url, resp_headers, data)
             print(f"    Detected: {content_type}")
 
             try:

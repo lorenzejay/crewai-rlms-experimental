@@ -1,7 +1,57 @@
+from __future__ import annotations
+
 from typing import Any
 
+from crewai.events.event_bus import crewai_event_bus
 from crewai.llm import BaseLLM
 from rlm import RLM
+
+from experimental_rlms.events import RLMIterationEvent
+
+
+class RLMEventLogger:
+    """Duck-typed RLM logger that emits CrewAI events for each iteration."""
+
+    def __init__(
+        self,
+        agent_role: str | None = None,
+        agent_id: str | None = None,
+    ):
+        self._agent_role = agent_role
+        self._agent_id = agent_id
+        self._iteration_count = 0
+
+    @property
+    def iteration_count(self) -> int:
+        return self._iteration_count
+
+    def log_metadata(self, metadata: Any) -> None:
+        """No-op — metadata logging not needed for event emission."""
+
+    def log(self, iteration: Any) -> None:
+        """Emit an RLMIterationEvent for this iteration."""
+        self._iteration_count += 1
+
+        code_snippets: list[str] = []
+        code_outputs: list[str] = []
+        code_errors: list[str] = []
+
+        for block in iteration.code_blocks:
+            code_snippets.append(block.code)
+            code_outputs.append(block.result.stdout)
+            code_errors.append(block.result.stderr)
+
+        event = RLMIterationEvent(
+            iteration_number=self._iteration_count,
+            code_snippets=code_snippets,
+            code_outputs=code_outputs,
+            code_errors=code_errors,
+            execution_time=iteration.iteration_time,
+            has_final_answer=iteration.final_answer is not None,
+            agent_role=self._agent_role,
+            agent_id=self._agent_id,
+        )
+        crewai_event_bus.emit(self, event)
 
 
 class RLMLLM(BaseLLM):
@@ -17,9 +67,15 @@ class RLMLLM(BaseLLM):
         environment_kwargs: dict[str, Any] | None = None,
         verbose: bool = False,
         context_data: Any | None = None,
+        agent_role: str | None = None,
+        agent_id: str | None = None,
         **kwargs: Any,
     ):
         super().__init__(model=model, temperature=temperature, **kwargs)
+
+        logger = None
+        if agent_role or agent_id:
+            logger = RLMEventLogger(agent_role=agent_role, agent_id=agent_id)
 
         backend_kwargs = {"model_name": model}
         if temperature is not None:
@@ -32,6 +88,7 @@ class RLMLLM(BaseLLM):
             environment_kwargs=environment_kwargs or {},
             max_iterations=max_iterations,
             verbose=verbose,
+            logger=logger,
         )
         self._context_data = context_data
 

@@ -1,8 +1,8 @@
-from typing import List
+from typing import Any, List
 
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
-from crewai.project import CrewBase, agent, crew, task
+from crewai.project import CrewBase, agent, before_kickoff, crew, task
 
 from experimental_rlms.rlm_llm import RLMLLM
 
@@ -20,6 +20,14 @@ class ResearchCrew:
     # Set after construction, before .crew() is called
     papers_dict: dict[str, str] = {}
 
+    @before_kickoff
+    def _set_llm_context(self, inputs: dict[str, Any]) -> dict[str, Any]:
+        """Push papers_dict into each RLMLLM agent right before execution."""
+        for agent_obj in self.agents:
+            if isinstance(agent_obj.llm, RLMLLM):
+                agent_obj.llm.set_context_data(self.papers_dict)
+        return inputs
+
     @agent
     def research_analyst(self) -> Agent:
         return Agent(
@@ -27,7 +35,7 @@ class ResearchCrew:
             llm=RLMLLM(
                 model="gpt-4.1-nano",
                 verbose=True,
-                context_data=self.papers_dict,
+                agent_role="research_analyst",
             ),
         )
 
