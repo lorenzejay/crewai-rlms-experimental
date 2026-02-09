@@ -1,0 +1,21 @@
+literature_review:
+  description: >
+    Analyze the research papers provided in your context and produce a
+    structured literature review on "{topic}".
+
+    The papers available for analysis are: {paper_titles}
+
+    Your review MUST include these sections:
+    1. Executive Summary — a concise overview of the field and key findings
+    2. Individual Paper Summaries — a brief summary of each paper's objectives,
+       methods, and contributions
+    3. Thematic Analysis — identify and discuss recurring themes across papers
+    4. Comparative Analysis — compare and contrast methodologies and findings
+    5. Research Gaps and Future Directions — identify what remains unexplored
+    6. Conclusion — synthesize the overall state of research on this topic
+  expected_output: >
+    A well-structured literature review in markdown format with all six
+    required sections. Each section should have a level-2 heading (##).
+    The review should be thorough, citing specific papers by name when
+    discussing their contributions.
+  agent: research_analyst
