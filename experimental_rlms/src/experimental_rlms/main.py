@@ -141,6 +141,13 @@ class ResearchFlow(Flow[ResearchState]):
         paper_titles = ", ".join(self.state.papers_text.keys())
         print(f"Analyzing {len(self.state.papers_text)} sources with RLM crew...")
 
+        # Build title → URL mapping for citations
+        url_map = {_title_from_url(url): url for url in self.state.urls}
+        paper_sources = "\n".join(
+            f"- {title}: {url_map.get(title, 'N/A')}"
+            for title in self.state.papers_text
+        )
+
         topic = self.state.topic or "research analysis"
         research_crew = ResearchCrew()
         research_crew.papers_dict = self.state.papers_text
@@ -150,6 +157,7 @@ class ResearchFlow(Flow[ResearchState]):
             .kickoff(inputs={
                 "topic": topic,
                 "paper_titles": paper_titles,
+                "paper_sources": paper_sources,
             })
         )
         self.state.literature_review = result.raw
@@ -158,6 +166,8 @@ class ResearchFlow(Flow[ResearchState]):
     def save_review(self):
         """Write the literature review to a markdown file."""
         topic = self.state.topic or "Research Analysis"
+        url_map = {_title_from_url(url): url for url in self.state.urls}
+
         header_lines = [
             f"# Literature Review: {topic}",
             "",
@@ -170,7 +180,24 @@ class ResearchFlow(Flow[ResearchState]):
             header_lines.append(f"| {title} | {len(text):,} |")
         header_lines += ["", "---", ""]
 
-        content = "\n".join(header_lines) + self.state.literature_review
+        # Append a references section with full URLs
+        ref_lines = [
+            "",
+            "---",
+            "",
+            "## References",
+            "",
+        ]
+        for title in self.state.papers_text:
+            url = url_map.get(title, "")
+            ref_lines.append(f"- [{title}]({url})" if url else f"- {title}")
+
+        content = (
+            "\n".join(header_lines)
+            + self.state.literature_review
+            + "\n".join(ref_lines)
+            + "\n"
+        )
 
         out_path = Path("literature_review.md")
         out_path.write_text(content)

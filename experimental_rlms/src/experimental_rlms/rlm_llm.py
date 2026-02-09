@@ -59,7 +59,7 @@ class RLMLLM(BaseLLM):
 
     def __init__(
         self,
-        model: str = "gpt-4.1-nano",
+        model: str = "gpt-5-mini",
         backend: str = "openai",
         temperature: float | None = None,
         max_iterations: int = 30,
@@ -101,6 +101,16 @@ class RLMLLM(BaseLLM):
         """
         self._context_data = data
 
+    @staticmethod
+    def _format_context(data: Any) -> str:
+        """Format context data as clean delimited text for the RLM prompt."""
+        if isinstance(data, dict):
+            sections = []
+            for title, text in data.items():
+                sections.append(f"{'=' * 60}\nDOCUMENT: {title}\n{'=' * 60}\n{text}")
+            return "\n\n".join(sections)
+        return str(data)
+
     def call(
         self,
         messages,
@@ -116,7 +126,7 @@ class RLMLLM(BaseLLM):
             # Pass context_data as prompt (for chunked processing) and
             # agent messages as root_prompt (visible to root LM every iteration)
             result = self.rlm.completion(
-                prompt=str(self._context_data),
+                prompt=self._format_context(self._context_data),
                 root_prompt=agent_prompt,
             )
         else:

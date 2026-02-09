@@ -33,7 +33,7 @@ class ResearchCrew:
         return Agent(
             config=self.agents_config["research_analyst"],  # type: ignore[index]
             llm=RLMLLM(
-                model="gpt-4.1-nano",
+                model="gpt-5-mini",
                 verbose=True,
                 agent_role="research_analyst",
             ),

@@ -5,6 +5,9 @@ literature_review:
 
     The papers available for analysis are: {paper_titles}
 
+    Source references for citation:
+    {paper_sources}
+
     Your review MUST include these sections:
     1. Executive Summary — a concise overview of the field and key findings
     2. Individual Paper Summaries — a brief summary of each paper's objectives,
@@ -13,9 +16,11 @@ literature_review:
     4. Comparative Analysis — compare and contrast methodologies and findings
     5. Research Gaps and Future Directions — identify what remains unexplored
     6. Conclusion — synthesize the overall state of research on this topic
+    7. References — list each source with its full URL
   expected_output: >
-    A well-structured literature review in markdown format with all six
+    A well-structured literature review in markdown format with all seven
     required sections. Each section should have a level-2 heading (##).
-    The review should be thorough, citing specific papers by name when
-    discussing their contributions.
+    The review should be thorough, citing specific papers by name and
+    linking to their source URLs when discussing their contributions.
+    The References section must list every source with its URL.
   agent: research_analyst
